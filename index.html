@@ -1,0 +1,689 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>学級通信自動生成ツール</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@400;600&family=Noto+Sans+JP:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #1a1a2e;
+    --ink-light: #4a4a6a;
+    --ink-muted: #8888aa;
+    --paper: #faf9f6;
+    --paper-warm: #f5f0e8;
+    --paper-ruled: #ede8dc;
+    --accent: #2d6a4f;
+    --accent-soft: #d8ece2;
+    --red: #c94a3a;
+    --border: #d8d0c0;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Noto Sans JP', sans-serif;
+    background: var(--paper);
+    color: var(--ink);
+    min-height: 100vh;
+    padding-bottom: 80px;
+    background-image: repeating-linear-gradient(
+      0deg, transparent, transparent 31px,
+      var(--paper-ruled) 31px, var(--paper-ruled) 32px
+    );
+  }
+
+  .page-wrapper {
+    max-width: 780px;
+    margin: 0 auto;
+    padding: 0 20px 80px;
+    background: var(--paper);
+    background-image: repeating-linear-gradient(
+      0deg, transparent, transparent 31px,
+      var(--paper-ruled) 31px, var(--paper-ruled) 32px
+    );
+    min-height: 100vh;
+    box-shadow: 0 0 60px rgba(26,26,46,0.12);
+    position: relative;
+  }
+
+  .margin-line {
+    position: fixed;
+    left: calc(50% - 390px + 48px);
+    top: 0; bottom: 0;
+    width: 1px;
+    background: rgba(45,106,79,0.25);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  header {
+    padding: 48px 0 32px 60px;
+    border-bottom: 2px solid var(--ink);
+    margin-bottom: 32px;
+  }
+
+  .header-label {
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    color: var(--accent);
+    text-transform: uppercase;
+    margin-bottom: 8px;
+    font-weight: 500;
+  }
+
+  h1 {
+    font-family: 'Noto Serif JP', serif;
+    font-size: 28px;
+    font-weight: 600;
+    line-height: 1.4;
+    color: var(--ink);
+  }
+
+  .header-sub {
+    margin-top: 8px;
+    font-size: 13px;
+    color: var(--ink-light);
+    font-weight: 300;
+    line-height: 1.8;
+  }
+
+  .content { padding-left: 60px; }
+
+  .section { margin-bottom: 28px; animation: fadeUp 0.4s ease both; }
+  .section:nth-child(1) { animation-delay: 0.05s; }
+  .section:nth-child(2) { animation-delay: 0.1s; }
+  .section:nth-child(3) { animation-delay: 0.15s; }
+  .section:nth-child(4) { animation-delay: 0.2s; }
+  .section:nth-child(5) { animation-delay: 0.25s; }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .section-label {
+    font-size: 11px;
+    letter-spacing: 0.15em;
+    color: var(--ink-muted);
+    text-transform: uppercase;
+    font-weight: 500;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .section-label::after {
+    content: '';
+    flex: 1;
+    height: 0.5px;
+    background: var(--border);
+  }
+
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+
+  .field { display: flex; flex-direction: column; gap: 5px; }
+
+  .field-label {
+    font-size: 11px;
+    color: var(--ink-muted);
+    font-weight: 500;
+    letter-spacing: 0.05em;
+  }
+
+  select, textarea, input[type=text] {
+    font-family: 'Noto Sans JP', sans-serif;
+    font-size: 13px;
+    color: var(--ink);
+    background: rgba(255,255,255,0.7);
+    border: 0.5px solid var(--border);
+    border-radius: 4px;
+    padding: 8px 10px;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    width: 100%;
+  }
+
+  select:focus, textarea:focus, input[type=text]:focus {
+    border-color: var(--ink-light);
+    box-shadow: 0 0 0 3px rgba(26,26,46,0.06);
+  }
+
+  textarea { resize: vertical; min-height: 70px; line-height: 1.8; }
+
+  /* テンプレート選択 */
+  .templates {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 8px;
+  }
+
+  .template-card {
+    border: 0.5px solid var(--border);
+    border-radius: 6px;
+    padding: 12px;
+    cursor: pointer;
+    background: rgba(255,255,255,0.6);
+    transition: all 0.15s;
+    user-select: none;
+  }
+
+  .template-card:hover { border-color: var(--ink-light); background: rgba(255,255,255,0.9); }
+
+  .template-card.on {
+    background: var(--accent-soft);
+    border-color: var(--accent);
+  }
+
+  .template-name {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--ink);
+    margin-bottom: 4px;
+  }
+
+  .template-desc {
+    font-size: 11px;
+    color: var(--ink-muted);
+    line-height: 1.5;
+  }
+
+  .gen-btn {
+    display: block;
+    width: 100%;
+    padding: 14px;
+    font-family: 'Noto Serif JP', serif;
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--paper);
+    background: var(--ink);
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    letter-spacing: 0.08em;
+    transition: background 0.2s, transform 0.1s;
+    margin-top: 4px;
+  }
+
+  .gen-btn:hover { background: var(--ink-light); }
+  .gen-btn:active { transform: scale(0.99); }
+  .gen-btn:disabled { background: var(--border); cursor: not-allowed; }
+
+  .result-section {
+    margin-top: 36px;
+    padding-top: 28px;
+    border-top: 1px solid var(--border);
+    display: none;
+    animation: fadeUp 0.4s ease;
+  }
+
+  .result-section.visible { display: block; }
+
+  .result-label {
+    font-size: 11px;
+    letter-spacing: 0.15em;
+    color: var(--accent);
+    text-transform: uppercase;
+    font-weight: 500;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .result-label::after {
+    content: '';
+    flex: 1;
+    height: 0.5px;
+    background: rgba(45,106,79,0.3);
+  }
+
+  .result-card {
+    background: rgba(255,255,255,0.9);
+    border: 0.5px solid var(--border);
+    border-left: 3px solid var(--accent);
+    border-radius: 4px;
+    padding: 20px;
+    font-family: 'Noto Serif JP', serif;
+    font-size: 14px;
+    line-height: 2.0;
+    color: var(--ink);
+    min-height: 120px;
+    white-space: pre-wrap;
+  }
+
+  .char-count { font-size: 12px; color: var(--ink-muted); margin-top: 8px; }
+
+  .action-row {
+    display: flex;
+    gap: 8px;
+    margin-top: 16px;
+  }
+
+  .outline-btn {
+    flex: 1;
+    padding: 9px;
+    font-family: 'Noto Sans JP', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.15s;
+    border: 0.5px solid var(--border);
+    background: transparent;
+    color: var(--ink-light);
+  }
+
+  .outline-btn:hover { border-color: var(--ink-light); color: var(--ink); }
+  .outline-btn.primary { background: var(--paper-warm); border-color: var(--border); color: var(--ink); }
+
+  .loading-dots {
+    display: inline-flex;
+    gap: 4px;
+    align-items: center;
+    padding: 8px 0;
+  }
+
+  .dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--ink-muted);
+    animation: pulse 1.2s ease-in-out infinite;
+  }
+
+  .dot:nth-child(2) { animation-delay: 0.2s; }
+  .dot:nth-child(3) { animation-delay: 0.4s; }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 0.3; transform: scale(0.8); }
+    50% { opacity: 1; transform: scale(1); }
+  }
+
+  .error-msg { color: var(--red); font-size: 13px; margin-top: 8px; }
+
+  .plan-banner {
+    position: fixed;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 100%;
+    max-width: 780px;
+    background: var(--ink);
+    color: var(--paper);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 24px 12px 72px;
+    z-index: 100;
+    gap: 12px;
+  }
+
+  .plan-count { font-size: 12px; color: rgba(250,249,246,0.6); }
+  .plan-count strong { color: var(--paper); font-weight: 500; }
+  .plan-divider { width: 1px; height: 28px; background: rgba(250,249,246,0.2); }
+  .plan-upgrade-text { font-size: 12px; color: rgba(250,249,246,0.7); }
+
+  .plan-btn {
+    background: var(--accent);
+    color: var(--paper);
+    font-family: 'Noto Serif JP', serif;
+    font-size: 13px;
+    font-weight: 600;
+    padding: 8px 18px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    white-space: nowrap;
+    text-decoration: none;
+    display: inline-block;
+    transition: opacity 0.15s;
+  }
+
+  .plan-btn:hover { opacity: 0.85; }
+
+  .toast {
+    position: fixed;
+    bottom: 100px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: var(--ink);
+    color: var(--paper);
+    font-size: 13px;
+    padding: 10px 20px;
+    border-radius: 4px;
+    opacity: 0;
+    transition: all 0.3s;
+    pointer-events: none;
+    white-space: nowrap;
+    z-index: 999;
+  }
+
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  @media (max-width: 600px) {
+    .page-wrapper { padding: 0 12px 60px; }
+    header, .content { padding-left: 20px; }
+    .margin-line { display: none; }
+    .grid-2, .grid-3 { grid-template-columns: 1fr; }
+    .plan-banner { padding: 10px 12px; }
+    .plan-divider, .plan-upgrade-text { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<div class="margin-line"></div>
+
+<div class="page-wrapper">
+  <header>
+    <div class="header-label">Teacher's Assistant</div>
+    <h1>学級通信<br>自動生成ツール</h1>
+    <p class="header-sub">
+      基本情報と内容を入力するだけで<br>
+      学級通信の文章を自動生成します
+    </p>
+  </header>
+
+  <div class="content">
+
+    <!-- テンプレート選択 -->
+    <div class="section">
+      <div class="section-label">テンプレートを選ぶ</div>
+      <div class="templates" id="templates">
+        <div class="template-card on" onclick="selectTemplate(this, 'standard')">
+          <div class="template-name">📄 スタンダード</div>
+          <div class="template-desc">行事・学習・先生からのメッセージの基本構成</div>
+        </div>
+        <div class="template-card" onclick="selectTemplate(this, 'event')">
+          <div class="template-name">🎉 行事特集</div>
+          <div class="template-desc">運動会・遠足など行事を中心にした構成</div>
+        </div>
+        <div class="template-card" onclick="selectTemplate(this, 'season')">
+          <div class="template-name">🍂 季節のたより</div>
+          <div class="template-desc">季節感を取り入れた温かみのある構成</div>
+        </div>
+        <div class="template-card" onclick="selectTemplate(this, 'learning')">
+          <div class="template-name">📚 学習報告</div>
+          <div class="template-desc">各教科の学習内容を詳しく伝える構成</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 基本情報 -->
+    <div class="section">
+      <div class="section-label">基本情報</div>
+      <div class="grid-3">
+        <div class="field">
+          <span class="field-label">学校種別</span>
+          <select id="schoolType">
+            <option>小学1年生</option>
+            <option>小学2年生</option>
+            <option>小学3年生</option>
+            <option>小学4年生</option>
+            <option>小学5年生</option>
+            <option>小学6年生</option>
+            <option>中学1年生</option>
+            <option>中学2年生</option>
+            <option>中学3年生</option>
+          </select>
+        </div>
+        <div class="field">
+          <span class="field-label">発行月</span>
+          <select id="month">
+            <option>4月</option><option>5月</option><option>6月</option>
+            <option>7月</option><option>8月</option><option>9月</option>
+            <option>10月</option><option>11月</option><option>12月</option>
+            <option>1月</option><option>2月</option><option>3月</option>
+          </select>
+        </div>
+        <div class="field">
+          <span class="field-label">文体</span>
+          <select id="style">
+            <option>です・ます調（丁寧）</option>
+            <option>である調（簡潔）</option>
+            <option>やわらかい口語調</option>
+          </select>
+        </div>
+      </div>
+      <div style="margin-top:12px;">
+        <div class="field-label" style="margin-bottom:8px;">文章の長さ</div>
+        <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:8px;" id="lengthCards">
+          <div class="length-card" onclick="selectLength(this,'200')" style="border:0.5px solid var(--border); border-radius:4px; padding:10px; cursor:pointer; text-align:center; background:rgba(255,255,255,0.6); transition:all 0.15s;">
+            <div style="font-size:13px; font-weight:500; color:var(--ink);">コンパクト</div>
+            <div style="font-size:11px; color:var(--ink-muted); margin-top:2px;">200字程度</div>
+          </div>
+          <div class="length-card on" onclick="selectLength(this,'400')" style="border:0.5px solid var(--accent); border-radius:4px; padding:10px; cursor:pointer; text-align:center; background:var(--accent-soft); transition:all 0.15s;">
+            <div style="font-size:13px; font-weight:500; color:var(--ink);">標準</div>
+            <div style="font-size:11px; color:var(--ink-muted); margin-top:2px;">400字程度</div>
+          </div>
+          <div class="length-card" onclick="selectLength(this,'700')" style="border:0.5px solid var(--border); border-radius:4px; padding:10px; cursor:pointer; text-align:center; background:rgba(255,255,255,0.6); transition:all 0.15s;">
+            <div style="font-size:13px; font-weight:500; color:var(--ink);">充実</div>
+            <div style="font-size:11px; color:var(--ink-muted); margin-top:2px;">700字程度</div>
+          </div>
+          <div class="length-card" onclick="selectLength(this,'1000')" style="border:0.5px solid var(--border); border-radius:4px; padding:10px; cursor:pointer; text-align:center; background:rgba(255,255,255,0.6); transition:all 0.15s;">
+            <div style="font-size:13px; font-weight:500; color:var(--ink);">詳細</div>
+            <div style="font-size:11px; color:var(--ink-muted); margin-top:2px;">1000字程度</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 今月の内容 -->
+    <div class="section">
+      <div class="section-label">今月の内容</div>
+      <div class="grid-2">
+        <div class="field">
+          <span class="field-label">今月の行事・イベント</span>
+          <textarea id="events" placeholder="例：運動会（5月20日）、授業参観（5月28日）、遠足（5月15日）"></textarea>
+        </div>
+        <div class="field">
+          <span class="field-label">学習内容</span>
+          <textarea id="learning" placeholder="例：国語「春の詩」、算数「かけ算」、理科「植物の観察」"></textarea>
+        </div>
+        <div class="field">
+          <span class="field-label">子どもたちの様子・エピソード</span>
+          <textarea id="episode" placeholder="例：給食の時間に友達と楽しく話している姿が印象的です。係活動も積極的に取り組んでいます。"></textarea>
+        </div>
+        <div class="field">
+          <span class="field-label">保護者へのお願い（任意）</span>
+          <textarea id="request" placeholder="例：運動会に向けて体調管理をお願いします。持ち物の確認もよろしくお願いします。"></textarea>
+        </div>
+      </div>
+    </div>
+
+    <!-- 先生からのメッセージ -->
+    <div class="section">
+      <div class="section-label">先生からのメッセージ（任意）</div>
+      <div class="field">
+        <span class="field-label">伝えたいことや想い</span>
+        <textarea id="message" placeholder="例：入学から1ヶ月が経ちました。子どもたちは毎日元気に登校してくれています。これからも一緒に楽しい学級を作っていきましょう。"></textarea>
+      </div>
+    </div>
+
+    <div class="section">
+      <button class="gen-btn" id="genBtn" onclick="generate()">学級通信を生成する</button>
+      <div class="error-msg" id="errorMsg"></div>
+    </div>
+
+    <div class="result-section" id="resultSection">
+      <div class="result-label">生成された学級通信</div>
+      <div class="result-card" id="resultText"></div>
+      <div class="char-count" id="charCount"></div>
+      <div class="action-row">
+        <button class="outline-btn primary" onclick="copyText()">コピーする</button>
+        <button class="outline-btn" onclick="generate()">別パターンを生成</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<div class="plan-banner">
+  <div style="display:flex; align-items:center; gap:10px;">
+    <div class="plan-count">
+      今月の残り生成回数：<strong id="remainCount">10</strong> 回
+    </div>
+    <div class="plan-divider"></div>
+    <div class="plan-upgrade-text">月額680円で無制限に使えます</div>
+  </div>
+  <a class="plan-btn" href="https://buy.stripe.com/8x228sbbM48g6gE2g18Vi04" target="_blank">
+    有料プランに申し込む →
+  </a>
+</div>
+
+<script>
+const FREE_LIMIT = 10;
+let selectedTemplate = 'standard';
+let selectedLength = '400';
+
+function getUsedCount() {
+  const saved = JSON.parse(localStorage.getItem('gakkyuu_usage') || '{}');
+  const now = new Date();
+  const key = `${now.getFullYear()}-${now.getMonth()+1}`;
+  if (saved.month !== key) {
+    localStorage.setItem('gakkyuu_usage', JSON.stringify({ month: key, count: 0 }));
+    return 0;
+  }
+  return saved.count || 0;
+}
+
+function saveUsedCount(count) {
+  const now = new Date();
+  const key = `${now.getFullYear()}-${now.getMonth()+1}`;
+  localStorage.setItem('gakkyuu_usage', JSON.stringify({ month: key, count: count }));
+}
+
+let usedCount = getUsedCount();
+
+function updateBanner() {
+  const remain = Math.max(0, FREE_LIMIT - usedCount);
+  document.getElementById('remainCount').textContent = remain;
+  if (remain === 0) document.getElementById('remainCount').style.color = '#c94a3a';
+  else document.getElementById('remainCount').style.color = '';
+}
+updateBanner();
+
+function selectTemplate(el, type) {
+  document.querySelectorAll('.template-card').forEach(c => c.classList.remove('on'));
+  el.classList.add('on');
+  selectedTemplate = type;
+}
+
+function selectLength(el, length) {
+  document.querySelectorAll('.length-card').forEach(c => {
+    c.classList.remove('on');
+    c.style.border = '0.5px solid var(--border)';
+    c.style.background = 'rgba(255,255,255,0.6)';
+  });
+  el.classList.add('on');
+  el.style.border = '0.5px solid var(--accent)';
+  el.style.background = 'var(--accent-soft)';
+  selectedLength = length;
+}
+
+const templateLabels = {
+  standard: 'スタンダード（行事・学習・先生からのメッセージの基本構成）',
+  event: '行事特集（行事を中心にした構成）',
+  season: '季節のたより（季節感を取り入れた温かみのある構成）',
+  learning: '学習報告（各教科の学習内容を詳しく伝える構成）'
+};
+
+async function generate() {
+  if (usedCount >= FREE_LIMIT) {
+    showToast('無料プランの上限に達しました。有料プランへお申し込みください。');
+    return;
+  }
+
+  const btn = document.getElementById('genBtn');
+  const resultSection = document.getElementById('resultSection');
+  const resultText = document.getElementById('resultText');
+  const charCount = document.getElementById('charCount');
+  const errorMsg = document.getElementById('errorMsg');
+
+  const schoolType = document.getElementById('schoolType').value;
+  const month = document.getElementById('month').value;
+  const style = document.getElementById('style').value;
+  const events = document.getElementById('events').value.trim();
+  const learning = document.getElementById('learning').value.trim();
+  const episode = document.getElementById('episode').value.trim();
+  const request = document.getElementById('request').value.trim();
+  const message = document.getElementById('message').value.trim();
+
+  btn.disabled = true;
+  btn.textContent = '生成中...';
+  errorMsg.textContent = '';
+  resultSection.classList.add('visible');
+  resultText.innerHTML = '<div class="loading-dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>';
+  charCount.textContent = '';
+
+  const loadingDots = resultText.querySelector('.loading-dots');
+
+  const prompt = `あなたは小中学校の学級通信を書くプロの教員アシスタントです。
+以下の条件で学級通信の文章を生成してください。
+
+【条件】
+- 対象：${schoolType}
+- 発行月：${month}
+- テンプレート：${templateLabels[selectedTemplate]}
+- 文体：${style}
+- 文章の長さ：${selectedLength}字程度
+- 今月の行事：${events || '（なし）'}
+- 学習内容：${learning || '（なし）'}
+- 子どもたちの様子：${episode || '（なし）'}
+- 保護者へのお願い：${request || '（なし）'}
+- 先生からのメッセージ：${message || '（なし）'}
+
+【注意事項】
+- タイトル「〇月 学級通信」から始める
+- セクションごとに見出しをつける
+- 保護者が読んで温かい気持ちになるような文章にする
+- ${style}で統一する
+- 文章のみ出力し、前置きや説明は不要`;
+
+  try {
+    const res = await fetch('/api/generate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ prompt })
+    });
+
+    const data = await res.json();
+
+    if (data.text) {
+      resultText.textContent = data.text;
+      charCount.textContent = `${data.text.length}字`;
+      usedCount++;
+      saveUsedCount(usedCount);
+      updateBanner();
+    } else {
+      resultText.textContent = '';
+      errorMsg.textContent = 'エラー：' + (data.error || 'もう一度お試しください');
+    }
+  } catch (e) {
+    resultText.textContent = '';
+    errorMsg.textContent = 'ネットワークエラーが発生しました。';
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '学級通信を生成する';
+  }
+}
+
+function copyText() {
+  const text = document.getElementById('resultText').textContent;
+  if (!text.trim()) return;
+  navigator.clipboard.writeText(text).then(() => showToast('クリップボードにコピーしました'));
+}
+
+function showToast(msg) {
+  const toast = document.getElementById('toast');
+  toast.textContent = msg;
+  toast.classList.add('show');
+  setTimeout(() => toast.classList.remove('show'), 2500);
+}
+</script>
+</body>
+</html>
