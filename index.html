@@ -601,7 +601,7 @@
       <div class="plan-divider"></div>
       <div class="plan-upgrade-text">月額680円で所見・学級通信ツール使い放題</div>
     </div>
-    <a class="plan-btn" href="https://buy.stripe.com/8x228sbbM48g6gE2g18Vi04" target="_blank">
+    <a class="plan-btn" id="planRightArea" href="https://buy.stripe.com/8x228sbbM48g6gE2g18Vi04" target="_blank">
       有料プランに申し込む →
     </a>
   </div>
@@ -656,9 +656,13 @@ function setPremiumUI(premium) {
   isPremium = premium;
   const planCountArea = document.getElementById('planCountArea');
   const emailBanner = document.getElementById('emailBanner');
+  const planRightArea = document.getElementById('planRightArea');
   if (premium) {
     planCountArea.innerHTML = '<span class="premium-status">✓ プレミアム会員（使い放題）</span>';
     emailBanner.style.display = 'none';
+    planRightArea.href = 'https://billing.stripe.com/p/login/28E8wQenY8ow8oM5sd8Vi00';
+    planRightArea.textContent = 'プラン管理 →';
+    planRightArea.target = '_blank';
   } else {
     planCountArea.innerHTML = `
       <div class="plan-count">
@@ -668,6 +672,9 @@ function setPremiumUI(premium) {
       <div class="plan-upgrade-text">月額680円で所見・学級通信ツール使い放題</div>
     `;
     emailBanner.style.display = 'flex';
+    planRightArea.href = 'https://buy.stripe.com/8x228sbbM48g6gE2g18Vi04';
+    planRightArea.textContent = '有料プランに申し込む →';
+    planRightArea.target = '_blank';
   }
 }
 
