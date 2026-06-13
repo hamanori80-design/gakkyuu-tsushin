@@ -26,7 +26,7 @@
     background: var(--paper);
     color: var(--ink);
     min-height: 100vh;
-    padding-bottom: 140px;
+    padding-bottom: 170px;
     background-image: repeating-linear-gradient(
       0deg, transparent, transparent 31px,
       var(--paper-ruled) 31px, var(--paper-ruled) 32px
@@ -36,7 +36,7 @@
   .page-wrapper {
     max-width: 780px;
     margin: 0 auto;
-    padding: 0 20px 140px;
+    padding: 0 20px 170px;
     background: var(--paper);
     background-image: repeating-linear-gradient(
       0deg, transparent, transparent 31px,
@@ -406,6 +406,18 @@
     font-weight: 500;
   }
 
+  .support-link {
+    text-align: center;
+    font-size: 11px;
+    color: var(--ink-muted);
+    padding: 10px 0 4px;
+  }
+
+  .support-link a {
+    color: var(--ink-light);
+    text-decoration: underline;
+  }
+
   .toast {
     position: fixed;
     bottom: 100px;
@@ -612,6 +624,10 @@
       <input type="email" id="premiumEmail" class="email-input" placeholder="ご登録のメールアドレス">
       <button class="plan-btn" onclick="checkPremium()">確認</button>
     </div>
+  </div>
+
+  <div class="support-link">
+    ご意見・ご質問はこちら：<a href="mailto:teacher.tools.help@gmail.com">teacher.tools.help@gmail.com</a>
   </div>
 </div>
 
