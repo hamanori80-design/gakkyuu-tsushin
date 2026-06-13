@@ -279,6 +279,27 @@
   .outline-btn:hover { border-color: var(--ink-light); color: var(--ink); }
   .outline-btn.primary { background: var(--paper-warm); border-color: var(--border); color: var(--ink); }
 
+  .history-section {
+    margin-top: 28px;
+    padding-top: 20px;
+    border-top: 0.5px solid var(--border);
+  }
+
+  .history-item {
+    padding: 12px 14px;
+    background: rgba(255,255,255,0.5);
+    border: 0.5px solid var(--border);
+    border-radius: 4px;
+    margin-bottom: 8px;
+    font-size: 13px;
+    line-height: 1.7;
+    color: var(--ink-light);
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .history-item:hover { background: rgba(255,255,255,0.9); color: var(--ink); border-color: var(--ink-muted); }
+
   .loading-dots {
     display: inline-flex;
     gap: 4px;
@@ -557,7 +578,13 @@
       <div class="action-row">
         <button class="outline-btn primary" onclick="copyText()">コピーする</button>
         <button class="outline-btn" onclick="generate()">別パターンを生成</button>
+        <button class="outline-btn" onclick="saveToHistory()">履歴に保存</button>
       </div>
+    </div>
+
+    <div class="history-section" id="historySection" style="display:none;">
+      <div class="section-label">保存した履歴</div>
+      <div id="historyList"></div>
     </div>
 
   </div>
@@ -590,6 +617,7 @@
 
 <script>
 const FREE_LIMIT = 10;
+const history = [];
 let selectedTemplate = 'standard';
 let selectedLength = '400';
 let isPremium = false;
@@ -790,6 +818,34 @@ function copyText() {
   const text = document.getElementById('resultText').textContent;
   if (!text.trim()) return;
   navigator.clipboard.writeText(text).then(() => showToast('クリップボードにコピーしました'));
+}
+
+function saveToHistory() {
+  const text = document.getElementById('resultText').textContent;
+  if (!text.trim()) return;
+  history.unshift(text);
+  renderHistory();
+  showToast('履歴に保存しました');
+}
+
+function renderHistory() {
+  const section = document.getElementById('historySection');
+  const list = document.getElementById('historyList');
+  if (history.length === 0) { section.style.display = 'none'; return; }
+  section.style.display = 'block';
+  list.innerHTML = history.slice(0, 5).map((t, i) => `
+    <div class="history-item" onclick="useHistory(${i})">
+      ${t.length > 60 ? t.substring(0, 60) + '…' : t}
+    </div>
+  `).join('');
+}
+
+function useHistory(i) {
+  const text = history[i];
+  document.getElementById('resultText').textContent = text;
+  document.getElementById('charCount').textContent = `${text.length}字`;
+  document.getElementById('resultSection').classList.add('visible');
+  showToast('履歴を読み込みました');
 }
 
 function showToast(msg) {
